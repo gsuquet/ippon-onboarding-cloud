@@ -65,7 +65,7 @@ aws s3 cp ./data s3://workshop-textract-images-$TEAMNAME --recursive
 
 ### 2.3/ Sync the S3 bucket with the data folder to get the resulting CSV files
 ```bash
-aws s3 sync s3://workshop-textract-results-$TEAMNAME ./data
+aws s3 sync s3://workshop-textract-images-$TEAMNAME ./data
 ```
 
 ### 2.4/ Concatenate the CSV files
@@ -76,5 +76,5 @@ sed -i '/^$/d' ./data/suspects.csv
 
 ### 2.5/ Upload the CSV file to the S3 bucket
 ```bash
-aws s3 sync ./data s3://workshop-textract-results-$TEAMNAME
+aws s3 sync ./data s3://workshop-textract-images-$TEAMNAME
 ```
