@@ -18,6 +18,11 @@ Connect to the Cloud9 environment and clone this repository.
 git clone https://github.com/gsuquet/ippon-tp-cloud.git
 ```
 
+Install the serverless framework.
+```bash
+npm install -g serverless
+```
+
 ## 1/ Rekognition
 ### 1.1/ Deploy stack
 ```bash
@@ -53,4 +58,23 @@ cd ../2-Textract
 serverless deploy --stage $TEAMNAME
 ```
 
-### 2.2/ 
+### 2.2/ Copy the images to the S3 bucket
+```bash
+aws s3 cp ./data s3://workshop-textract-images-$TEAMNAME --recursive
+```
+
+### 2.3/ Sync the S3 bucket with the data folder to get the resulting CSV files
+```bash
+aws s3 sync s3://workshop-textract-results-$TEAMNAME ./data
+```
+
+### 2.4/ Concatenate the CSV files
+```bash
+cat ./data/*.csv > ./data/suspects.csv
+sed -i '/^$/d' ./data/suspects.csv
+```
+
+### 2.5/ Upload the CSV file to the S3 bucket
+```bash
+aws s3 sync ./data s3://workshop-textract-results-$TEAMNAME
+```
