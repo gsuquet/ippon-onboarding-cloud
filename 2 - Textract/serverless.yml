@@ -1,0 +1,124 @@
+service: ippon-textract-workshop
+
+custom:
+  bucketName: workshop-textract-images-${self:provider.stage}
+  tableName: workshop-textract_table_${self:provider.stage}
+
+provider:
+  name: aws
+  region: eu-west-1
+  stage: ${opt:stage, 'dev'}
+  runtime: python3.8
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:PutItem
+      Resource: "arn:aws:dynamodb:eu-west-1:*:*"
+    - Effect: Allow
+      Action:
+        - textract:*
+      Resource: "*"
+    - Effect: Allow
+      Action:
+        - s3:*
+      Resource: "*"
+    - Effect: Allow
+      Action:
+        - kms:*
+      Resource: "*"
+
+
+functions:
+  s3ObjectCreatedFromSQS:
+    handler: handler.hello
+    timeout: 30
+    environment: 
+      tableName: ${self:custom.tableName}
+      bucketName: ${self:custom.bucketName}
+    events:
+      - sqs:
+          batchSize: 1
+          arn:
+            Fn::GetAtt:
+              - MyQueue
+              - Arn
+
+resources:
+  Resources:
+    MyQueue:
+      Type: "AWS::SQS::Queue"
+      Properties:
+        VisibilityTimeout: 60
+        RedrivePolicy: 
+          deadLetterTargetArn: 
+            Fn::GetAtt: 
+              - "MyDeadLetterQueue"
+              - "Arn"
+          maxReceiveCount: 5
+    MyDeadLetterQueue: 
+      Type: AWS::SQS::Queue
+    TestDlqPolicy:
+      Type: AWS::SQS::QueuePolicy
+      Properties:
+        Queues:
+          - Ref: MyQueue
+        PolicyDocument:
+          Id: ServerlessTplLambdaDlQueueId  
+          Version: '2012-10-17' 
+          Statement:
+            - Sid: Allow-Lambda-SendMessage
+              Effect: Allow
+              Principal:
+                 AWS: "*"
+              Action:
+                - SQS:SendMessage
+              Resource: "*"
+    MyBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self:custom.bucketName}
+        NotificationConfiguration:
+          QueueConfigurations:
+          - Queue:
+              Fn::GetAtt:
+                - MyQueue
+                - Arn
+            Event: s3:ObjectCreated:*
+            Filter: 
+              S3Key:
+                Rules:
+                  - Name: "suffix"
+                    Value: ".jpg"
+          - Queue:
+              Fn::GetAtt:
+                - MyQueue
+                - Arn
+            Event: s3:ObjectCreated:*
+            Filter: 
+              S3Key:
+                Rules:
+                  - Name: "suffix"
+                    Value: ".png"
+    MyDynamoDBTable:
+      Type: "AWS::DynamoDB::Table"
+      Properties:
+        AttributeDefinitions:
+        - AttributeName: key_object
+          AttributeType: S
+        - AttributeName: bucket_name
+          AttributeType: S
+        KeySchema:
+        - AttributeName: key_object
+          KeyType: HASH
+        - AttributeName: bucket_name
+          KeyType: RANGE
+        TableName: ${self:custom.tableName}
+        ProvisionedThroughput:
+          ReadCapacityUnits: '5'
+          WriteCapacityUnits: '5'
+          
+  Outputs:
+    MyQueueArn:
+      Description: The ARN for the Queue
+      Value:
+        "Fn::GetAtt": [MyQueue, Arn ]

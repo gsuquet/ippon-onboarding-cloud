@@ -1,0 +1,62 @@
+service: ippon-rekognition-workshop
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: python3.8
+  region: eu-west-1
+  stage: ${opt:stage, 'dev'}
+  apiGateway:
+    binaryMediaTypes:
+      - 'multipart/form-data'
+  iam:
+    role:
+      statements: 
+        - Effect: Allow
+          Action: 
+            - rekognition:*
+          Resource: '*'
+
+
+functions:
+  rekognizer:
+    handler: handler.lambda_handler
+    timeout: 60
+    events:
+      - http:
+          path: /rekognize
+          method: post
+
+
+resources:
+  Resources:
+    S3Bucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: "ippon-onboarding-rekognition-website-${self:provider.stage}"
+        PublicAccessBlockConfiguration:
+          BlockPublicAcls: false
+        OwnershipControls:
+          Rules:
+            - ObjectOwnership: ObjectWriter
+        WebsiteConfiguration:
+          IndexDocument: index.html
+          ErrorDocument: error.html
+    BucketPolicy:
+      Type: AWS::S3::BucketPolicy
+      Properties:
+        Bucket: !Ref S3Bucket
+        PolicyDocument:
+          Statement:
+            - Sid: PublicReadForGetBucketObjects
+              Effect: Allow
+              Principal: '*'
+              Action: 's3:GetObject'
+              Resource: !Join
+                - ''
+                - - 'arn:aws:s3:::'
+                  - !Ref S3Bucket
+                  - /*
+
+
+
