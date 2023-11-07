@@ -1,7 +1,8 @@
 import csv
 import base64
+import os
 
-with open('../suspects.csv', 'r') as infile, open('../cleaned_suspects.csv', 'w', newline='') as outfile:
+with open('../2-Textract/data/suspects/suspects.csv', 'r') as infile, open('../2-Textract/data/suspects/cleaned_suspects.csv', 'w', newline='') as outfile:
     reader = csv.reader(infile)
     writer = csv.writer(outfile)
 
@@ -20,3 +21,6 @@ with open('../suspects.csv', 'r') as infile, open('../cleaned_suspects.csv', 'w'
         except Exception:
             # Skip the row if the first cell cannot be decoded
             continue
+
+# Delete the original suspects.csv file
+os.remove('../2-Textract/data/suspects/suspects.csv')

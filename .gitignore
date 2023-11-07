@@ -1,2 +1,5 @@
 # Serverless framework
 **/.serverless/*
+
+# Textract results
+**/*.png*.csv
