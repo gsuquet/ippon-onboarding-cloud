@@ -31,7 +31,7 @@ serverless deploy --stage $TEAMNAME
 ```
 
 ### 1.2/ Update the index.html file
-Download the 'index.html' file and Replace the API_GATEWAY_URL variable with the generated API gateway url from the deployed stack.
+In the 'index.html' file, replace the **API_GATEWAY_URL** variable with the generated API gateway url from the deployed stack.
 
 ### 1.3/ Upload the index.html file to your website bucket
 ```bash
@@ -70,6 +70,7 @@ aws s3 sync s3://workshop-textract-images-$TEAMNAME ./data
 
 ### 2.4/ Concatenate the CSV files
 ```bash
+mkdir ./data/suspects
 cat ./data/*.csv > ./data/suspects/suspects.csv
 sed -i '/^$/d' ./data/suspects/suspects.csv
 ```
@@ -88,8 +89,9 @@ aws s3 cp ./data s3://workshop-textract-images-$TEAMNAME/address --recursive
 
 ### 3.2/ Create an IAM role for Glue
 ```bash
-aws iam create-role --role-name GlueServiceRole-$TEAMNAME --assume-role-policy-document file://glue-role.json
-aws iam attach-role-policy --role-name GlueServiceRole-$TEAMNAME --policy-arn arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole
+aws iam create-policy --policy-name GlueOnboardingPolicy-$TEAMNAME --policy-document ./glue-policy.json
+aws iam create-role --role-name GlueOnboardingRole-$TEAMNAME --assume-role-policy-document ./glue-role.json
+aws iam attach-role-policy --role-name GlueOnboardingRole-$TEAMNAME --policy-arn arn:aws:iam::aws:policy/GlueOnboardingPolicy-$TEAMNAME
 ```
 
 ### 3.3/ Create the Glue database
@@ -110,7 +112,7 @@ Import the csv files from the S3 bucket.
 Transform the data using an SQL query.
 ```sql
 select
-cast(unbase64(trim(prenom)) as string) as prenom, cast(unhex(trim(nom)) as string) as nom, trim(id_adresse) as id_adresse
+cast(unbase64(trim(prenom)) as string) as prenom, cast(unhex(trim(nom)) as string) as nom, trim(telephone) as telephone, trim(id_adresse) as id_adresse
 from myDataSource
 ```
 
@@ -126,20 +128,16 @@ Export the results to the S3 bucket.
 
 Set the IAM role to the GlueServiceRole-$TEAMNAME role.
 
-### 3.5/ Create the Glue crawler
-```bash
-aws glue create-crawler --name glue-crawler-$TEAMNAME --role GlueServiceRole-$TEAMNAME --database-name glue-db-$TEAMNAME --targets S3Targets=[{Path=s3://workshop-textract-images-$TEAMNAME/results/}]
-```
 
-### 3.6/ Run the Glue crawler
-```bash
-aws glue start-crawler --name glue-crawler-$TEAMNAME
-```
-
-### 3.7/ Query the results in Athena
+### 3.5/ Query the results in Athena
 Search for Roza Otunbayeva in the results.
+Athena query : 
+```sql
+SELECT * FROM "glue-db-<TEAMNAME>"."results" WHERE "prenom" = 'Roza'
+```
+or using the cli :
 ```bash
-aws athena start-query-execution --query-string "SELECT * FROM \"glue-db-$TEAMNAME\".\"results\" WHERE \"Name\" = 'Roza'" --result-configuration OutputLocation=s3://workshop-textract-images-$TEAMNAME/query-results/
+aws athena start-query-execution --query-string "SELECT * FROM \"glue-db-$TEAMNAME\".\"results\" WHERE \"prenom\" = 'Roza'" --result-configuration OutputLocation=s3://workshop-textract-images-$TEAMNAME/query-results/
 ```
 
 
@@ -148,4 +146,7 @@ aws athena start-query-execution --query-string "SELECT * FROM \"glue-db-$TEAMNA
 aws s3 rm s3://workshop-textract-images-$TEAMNAME/ --recursive
 cd ../2-Textract
 serverless remove --stage $TEAMNAME
+aws iam detach-role-policy --role-name GlueOnboardingRole-$TEAMNAME --policy-arn arn:aws:iam::aws:policy/GlueOnboardingPolicy-$TEAMNAME
+aws iam delete-role --role-name GlueOnboardingRole-$TEAMNAME
+aws iam delete-policy --policy-arn arn:aws:iam::aws:policy/GlueOnboardingPolicy-$TEAMNAME
 ```
