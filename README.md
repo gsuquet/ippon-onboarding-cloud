@@ -40,6 +40,9 @@ aws s3 cp ./index.html s3://ippon-onboarding-rekognition-website-$TEAMNAME
 
 ### 1.4/ Verify your static web page and find the thief
 Open the website url in your browser and upload an image to find the thief.
+```bash
+echo "https://ippon-onboarding-rekognition-website-$TEAMNAME.s3.$(aws s3api get-bucket-location --bucket ippon-onboarding-rekognition-website-$TEAMNAME --output text).amazonaws.com/index.html"
+```
 
 ### 1.5/ Delete the content of the bucket
 ```bash
