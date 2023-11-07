@@ -15,7 +15,8 @@ Create a Cloud9 environment in the eu-west-1 region, using the cloud9.yml templa
 ```bash
 aws cloudformation create-stack --stack-name cloud9-$TEAMNAME --template-body file://cloud9.yml --parameters ParameterKey=TeamName,ParameterValue=$TEAMNAME --region eu-west-1
 ```
-Or using the console :
+Or using the console :  
+
 ![Cloud9 First image](./images/cloud9_1.png)
 ![Cloud9 Second image](./images/cloud9_2.png)
 ![Cloud9 Third image](./images/cloud9_3.png)
