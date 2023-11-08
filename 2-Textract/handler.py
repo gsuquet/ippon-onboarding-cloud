@@ -23,7 +23,7 @@ def hello(event, context):
     for sqs_record in event['Records']:
         print((json.dumps(sqs_record)))
         body = json.loads(sqs_record["body"])
-        
+
         if "Records" in body:
             for record in body['Records']:
                 key_object = record["s3"]["object"]["key"]
@@ -40,8 +40,8 @@ def hello(event, context):
 
                     #Send results to S3
                     # s3_client.put_object(Body=json.dumps(response), Bucket=bucket_name, Key=key_object+'.json')
-                    s3_client.put_object(Body=table_csv, Bucket=bucket_name, Key=output_file)
-                    
+                    s3_client.put_object(Body=table_csv, Bucket=bucket_name, Key='textract/'+output_file)
+
                     response = dynamodb_client.put_item(
                         TableName=table_name,
                         Item={
@@ -136,7 +136,7 @@ def generate_table_csv(table_result, blocks_map, table_index):
     rows = get_rows_columns_map(table_result, blocks_map)
 
     csv = ""
- 
+
     for row_index, cols in rows.items():
 
         for col_index, text in cols.items():

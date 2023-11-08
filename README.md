@@ -82,9 +82,7 @@ aws s3 sync s3://workshop-textract-images-$TEAMNAME ./data
 
 ### 2.4/ Concatenate the CSV files
 ```bash
-mkdir ./data/suspects
-cat ./data/*.csv > ./data/suspects/suspects.csv
-sed -i '/^$/d' ./data/suspects/suspects.csv
+./concatenate-csv-files.sh
 ```
 
 ### 2.5/ Upload the CSV file to the S3 bucket
