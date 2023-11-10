@@ -1,32 +1,25 @@
 # Ippon Onboarding Cloud & DevOps
 
-## Setup
-You can either use your local machine or a Cloud9 environment to deploy the stacks.
+## Connection to the AWS account
+Use the credentials provided to connect to the AWS management console.
 
-### Local
-Connect to the AWS account and create an access key in the IAM console.
-Install [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html ) and configure it with your credentials.
+### 1/ Reset your password
+Upon first connection, you will be asked to reset your password.
+
+### 2/ Set the region
+Set the region to **eu-west-1** (Ireland) in the top right corner of the console.
+
+### 2/ Connect to the Cloud9 environment
+In the searchbar at the top of the console, search for **Cloud9** and click on the result.
+On the environments page, click on **Open** on the right of the **onboarding-ippon-team-#-cloud9** environment.
+
+### 3/ Install the necessary tools
+Clone this repository.
 ```bash
-aws configure
+git clone https://github.com/gsuquet/ippon-onboarding-cloud.git
 ```
 
-### Cloud9
-Create a Cloud9 environment in the eu-west-1 region, using the cloud9.yml template.
-```bash
-aws cloudformation create-stack --stack-name cloud9-$TEAMNAME --template-body file://cloud9.yml --parameters ParameterKey=TeamName,ParameterValue=$TEAMNAME --region eu-west-1
-```
-Or using the console :  
-
-![Cloud9 First image](./images/cloud9_1.png)
-![Cloud9 Second image](./images/cloud9_2.png)
-![Cloud9 Third image](./images/cloud9_3.png)
-
-Connect to the Cloud9 environment and clone this repository.
-```bash
-git clone https://github.com/gsuquet/ippon-tp-cloud.git
-```
-
-## Install the serverless framework and set your TeamName
+Install the serverless framework and set your TeamName
 ```bash
 npm install -g serverless
 export TEAMNAME="<your-team-name>"
@@ -97,14 +90,7 @@ cd ../3-Glue
 aws s3 cp ./data s3://workshop-textract-images-$TEAMNAME/address --recursive
 ```
 
-### 3.2/ Create an IAM role for Glue
-```bash
-aws iam create-policy --policy-name GlueOnboardingPolicy-$TEAMNAME --policy-document file://glue-policy.json  --output text
-aws iam create-role --role-name GlueOnboardingRole-$TEAMNAME --assume-role-policy-document file://glue-role.json
-aws iam attach-role-policy --role-name GlueOnboardingRole-$TEAMNAME --policy-arn $(aws iam list-policies --region eu-west-1 --query "Policies[?PolicyName=='GlueOnboardingPolicy-$TEAMNAME'].Arn" --output text)
-```
-
-### 3.3/ Create the Glue job
+### 3.2/ Create the Glue job
 ![Glue job](./3-Glue/images/glue-job.png)
 
 Import the csv files from the S3 bucket.
@@ -131,27 +117,29 @@ Export the results to the S3 bucket.
 - Database : debault
 - Table name : "TEAMNAME"
 
-Set the IAM role to the GlueServiceRole-$TEAMNAME role.
+Set the IAM role to the GlueServiceRole role.
 
 
-### 3.4/ Query the results in Athena
-Search for Roza Otunbayeva in the results.
+### 3.3/ Query the results in Athena
+Search for the thief address in the results.
 Athena query : 
 ```sql
-SELECT * FROM "default"."$TEAMNAME" WHERE "prenom" = 'Roza'
+SELECT * FROM "default"."<Your Team name>" WHERE "prenom" = '<First name of the thief>'
 ```
 or using the cli :
 ```bash
-aws athena start-query-execution --region=eu-west-1 --query-string "SELECT * FROM \"default\".\"$TEAMNAME\" WHERE \"prenom\" = 'Roza'" --result-configuration OutputLocation=s3://workshop-textract-images-$TEAMNAME/query-results/
+aws athena start-query-execution --region=eu-west-1 --query-string "SELECT * FROM \"default\".\"$TEAMNAME\" WHERE \"prenom\" = '<First name of the thief>'" --result-configuration OutputLocation=s3://workshop-textract-images-$TEAMNAME/query-results/
 ```
 
 
 ## 4/ Clean up
+### 4.1/ Delete the content of the buckets
 ```bash
 aws s3 rm s3://workshop-textract-images-$TEAMNAME/ --recursive
+```
+
+### 4.2/ Delete the stack
+```bash
 cd ../2-Textract
 serverless remove --stage $TEAMNAME
-aws iam detach-role-policy --role-name GlueOnboardingRole-$TEAMNAME --policy-arn $(aws iam list-policies --region eu-west-1 --query "Policies[?PolicyName=='GlueOnboardingPolicy-$TEAMNAME'].Arn" --output text)
-aws iam delete-role --role-name GlueOnboardingRole-$TEAMNAME
-aws iam delete-policy --policy-arn $(aws iam list-policies --region eu-west-1 --query "Policies[?PolicyName=='GlueOnboardingPolicy-$TEAMNAME'].Arn" --output text)
 ```

@@ -47,6 +47,9 @@
 	"customizations": {
         "vscode": {
             "extensions": [
+				"ms-python.python",
+				"github.copilot",
+				"github.copilot-chat",
                 "editorconfig.editorconfig",
 				"seatonjiang.gitmoji-vscode",
                 "pkief.material-icon-theme"
