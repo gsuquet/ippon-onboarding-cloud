@@ -3,3 +3,7 @@
 
 # Textract results
 **/*.png*.csv
+
+# Secrets
+.env
+secrets/**/*

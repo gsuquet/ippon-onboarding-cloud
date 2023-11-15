@@ -17,10 +17,10 @@ Resources:
       Description: !Sub '${TeamName} Cloud9 IDE'
       AutomaticStopTimeMinutes: '60'
       InstanceType: 't2.medium'
-      # OwnerArn: 
-      # Repositories: 
-      #   - RepositoryUrl: 
-      #     PathComponent: 
+      OwnerArn: !Sub 'arn:aws:iam::${AWS::AccountId}:user/${TeamName}'
+      # Repositories:
+      #   - RepositoryUrl:
+      #     PathComponent:
 
 
 Outputs:
